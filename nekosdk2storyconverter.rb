@@ -20,6 +20,8 @@ class Nekosdk2StoryConverter
     @out = []
     @imgs = {}
     @chars = {}
+
+    @layers = {}
   end
 
   def out
@@ -51,6 +53,8 @@ class Nekosdk2StoryConverter
       process_sprite_load(n)
     when 10 # [背景ロード]
       process_bg_load(n)
+    when 21 # [立ち絵全て削除]
+      process_sprites_delete_all(n)
     when 30 # [ＢＧＭ再生]
       process_bgm_start(n)
     when 31 # [ＢＧＭ停止]
@@ -156,6 +160,19 @@ class Nekosdk2StoryConverter
       'y' => 0,
       'fn' => convert_fn(spr_file),
     }
+
+    @layers[spr_pos] = true
+  end
+
+  def process_sprites_delete_all(n)
+    @layers.each_key { |spr_pos|
+      @out << {
+        'op' => 'img',
+        'layer' => "spr#{spr_pos}",
+        'fn' => '',
+      }
+    }
+    @layers = {}
   end
 
   def strs(n)
