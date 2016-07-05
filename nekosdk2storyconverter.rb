@@ -43,8 +43,12 @@ class Nekosdk2StoryConverter
 
   def process_node(n)
     case n.opcode
+    when 2
+      process_wait(n)
     when 5
       process_text_display(n)
+    when 13
+      process_sprite_load(n)
     when 10 # [背景ロード]
       process_bg_load(n)
     when 30 # [ＢＧＭ再生]
@@ -98,6 +102,7 @@ class Nekosdk2StoryConverter
       'op' => 'sound_play',
       'fn' => convert_fn(s[1]),
       'channel' => "music#{params['ch']}",
+      'loop' => true,
     }
   end
 
@@ -124,6 +129,35 @@ class Nekosdk2StoryConverter
     }
   end
 
+  # [ウエイト]
+  # time:3500
+  def process_wait(n)
+    s = strs(n)
+    params = parse_cmd(s[0], '[ウエイト]')
+    @out << {
+      'op' => 'wait',
+      't' => params['time'].to_i,
+    }
+  end
+
+  # [立ち絵ロード] 位置:1
+  # sc\a711_000.bmp
+  def process_sprite_load(n)
+    s = strs(n)
+    params = parse_cmd(s[0], '[立ち絵ロード]')
+
+    spr_file = s[1]
+    spr_pos = params['位置'].to_i
+
+    @out << {
+      'op' => 'img',
+      'layer' => "spr#{spr_pos}",
+      'x' => spr_pos * 200,
+      'y' => 0,
+      'fn' => convert_fn(spr_file),
+    }
+  end
+
   def strs(n)
     n.strs.map { |s| s.value.rstrip.encode('UTF-8') }
   end
@@ -132,15 +166,29 @@ class Nekosdk2StoryConverter
     lines = cmd.split(/\n/)
     raise "invalid line 0: #{lines[0].inspect}" unless lines[0][0, expect_keyword.length] == expect_keyword
 
-    r = {}
+    rh = {}
+    ra = []
+
+    parse_cmdline(rh, ra, lines[0][expect_keyword.length..-1])
     lines[1..-1].each { |line|
-      line.split(/\//).each { |kv_pair|
-        k, v = kv_pair.strip.split(/:/)
-        r[k] = v
-      }
+      parse_cmdline(rh, ra, line)
     }
 
-    return r
+    rh[:pos] = ra
+
+    return rh
+  end
+
+  def parse_cmdline(h, a, line)
+    line.split(/\//).each { |kv_pair|
+      kv = kv_pair.strip.split(/:/)
+      if kv.size == 2
+        k, v = kv
+        h[k] = v
+      else
+        a << kv
+      end
+    }
   end
 
   def convert_fn(fn)
