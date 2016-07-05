@@ -53,6 +53,8 @@ class Nekosdk2StoryConverter
       process_bg_load(n)
     when 13
       process_sprite_load(n)
+    when 14 # [立ち絵削除] 位置:0
+      process_sprite_delete(n)
     when 21 # [立ち絵全て削除]
       process_sprites_delete_all(n)
     when 30 # [ＢＧＭ再生]
@@ -164,6 +166,7 @@ class Nekosdk2StoryConverter
     @layers[spr_pos] = true
   end
 
+  # [立ち絵全て削除]
   def process_sprites_delete_all(n)
     @layers.each_key { |spr_pos|
       @out << {
@@ -173,6 +176,20 @@ class Nekosdk2StoryConverter
       }
     }
     @layers = {}
+  end
+
+  # [立ち絵削除] 位置:0
+  def process_sprite_delete(n)
+    s = strs(n)
+    params = parse_cmd(s[0], '[立ち絵削除]')
+    spr_pos = params['位置'].to_i
+
+    @out << {
+      'op' => 'img',
+      'layer' => "spr#{spr_pos}",
+      'fn' => '',
+    }
+    @layers.delete(spr_pos)
   end
 
   def strs(n)
