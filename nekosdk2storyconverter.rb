@@ -7,9 +7,12 @@ class Nekosdk2StoryConverter
   include ImplicitChars
   include DetectQuotes
 
-  def initialize(fn, meta, lang)
+  POS_XR = [0.5, 0.3, 0.7, 0.1, 0.9]
+
+  def initialize(fn, meta, lang, imgs_meta)
     @meta = meta
     @lang = lang
+    @imgs_meta = imgs_meta
 
     @scr = NekosdkAdvscript2.from_file(fn)
     @id_to_idx = []
@@ -22,6 +25,8 @@ class Nekosdk2StoryConverter
     @chars = {}
 
     @layers = {}
+
+    @pos_x = POS_XR.map { |x| (@meta['resolution']['w'] * x).to_i }
   end
 
   def out
@@ -154,13 +159,19 @@ class Nekosdk2StoryConverter
 
     spr_file = s[1]
     spr_pos = params['位置'].to_i
+    spr_fn = convert_fn(spr_file)
+
+    img_meta = @imgs_meta[spr_fn]
+    raise "no img meta for #{spr_fn.inspect}, got #{@imgs_meta.keys.inspect}" unless img_meta
+
+    x = @pos_x[spr_pos] - img_meta[:w] / 2
 
     @out << {
       'op' => 'img',
       'layer' => "spr#{spr_pos}",
-      'x' => spr_pos * 200,
+      'x' => x,
       'y' => 0,
-      'fn' => convert_fn(spr_file),
+      'fn' => spr_fn,
     }
 
     @layers[spr_pos] = true
