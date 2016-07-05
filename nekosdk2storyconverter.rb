@@ -7,7 +7,7 @@ class Nekosdk2StoryConverter
   include ImplicitChars
   include DetectQuotes
 
-  POS_XR = [0.5, 0.3, 0.7, 0.1, 0.9]
+  POS_XR = [0.5, 0.3, 0.7, 0.1, 0.9, 0.2, 0.8]
 
   def initialize(fn, meta, lang, imgs_meta)
     @meta = meta
@@ -56,6 +56,8 @@ class Nekosdk2StoryConverter
       process_text_display(n)
     when 10 # [背景ロード]
       process_bg_load(n)
+    when 11 # [ＣＧロード]
+      process_cg_load(n)
     when 13
       process_sprite_load(n)
     when 14 # [立ち絵削除] 位置:0
@@ -140,6 +142,11 @@ class Nekosdk2StoryConverter
     }
   end
 
+  # [ＣＧロード]
+  def process_cg_load(n)
+    process_bg_load(n)
+  end
+
   # [ウエイト]
   # time:3500
   def process_wait(n)
@@ -164,6 +171,7 @@ class Nekosdk2StoryConverter
     img_meta = @imgs_meta[spr_fn]
     raise "no img meta for #{spr_fn.inspect}, got #{@imgs_meta.keys.inspect}" unless img_meta
 
+    raise "no pos_x for spr_pos=#{spr_pos}" unless @pos_x[spr_pos]
     x = @pos_x[spr_pos] - img_meta[:w] / 2
 
     @out << {
