@@ -12,7 +12,7 @@ class Decompiler
   end
 
   def dump(node)
-    puts "#{node.id}. type1=#{node.type1} type2=#{node.type2} some_ofs=#{node.some_ofs} next_id=#{node.next_id}"
+    puts "#{node.id}. type1=#{node.type1} opcode=#{node.opcode} some_ofs=#{node.some_ofs} next_id=#{node.next_id}"
 
     node.strs.each_with_index { |s, i|
       ss = s.value.rstrip
